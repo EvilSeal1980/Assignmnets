@@ -1,7 +1,6 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const port = 3000;
 
 app.use(bodyParser.json());
 
@@ -130,22 +129,98 @@ app.get("/admin/courses", (req, res) => {
 // User routes
 app.post("/users/signup", (req, res) => {
   // logic to sign up user
+  const user = {
+    username: req.body.username,
+    password: req.body.password,
+    purchasedCourses: [],
+  };
+  if (
+    USERS.find(
+      (user1) =>
+        user1.username === user.username && user1.password === user.password
+    )
+  ) {
+    res.send("Already an user");
+  } else {
+    USERS.push(user);
+    res.send("User created sucessfully");
+  }
 });
 
 app.post("/users/login", (req, res) => {
   // logic to log in user
+  const user = {
+    username: req.headers.username,
+    password: req.headers.password,
+  };
+  if (
+    USERS.find(
+      (user1) =>
+        user1.username === user.username && user1.password === user.password
+    )
+  ) {
+    res.send("Logged in sucessfully");
+  } else {
+    res.status(401).send("Unauthorized");
+  }
 });
 
 app.get("/users/courses", (req, res) => {
   // logic to list all courses
+  const user = {
+    username: req.headers.username,
+    password: req.headers.password,
+  };
+  let findUser = USERS.find(
+    (user1) =>
+      user1.username === user.username && user1.password === user.password
+  );
+  if (findUser) {
+    res.json(COURSES);
+  } else {
+    res.status(401).send("Unauthorized");
+  }
 });
 
 app.post("/users/courses/:courseId", (req, res) => {
   // logic to purchase a course
+  const user = {
+    username: req.headers.username,
+    password: req.headers.password,
+  };
+  let findUser = USERS.find(
+    (user1) =>
+      user1.username === user.username && user1.password === user.password
+  );
+  if (findUser) {
+    const course = findUser.purchasedCourses.find(
+      (course) => course.courseID === parseInt(req.params.courseId)
+    );
+    if (course) {
+      res.send("Course already purchased");
+    } else {
+      findUser.purchasedCourses.push({ course });
+      res.send("Course purchased sucessfully");
+    }
+  }
 });
 
 app.get("/users/purchasedCourses", (req, res) => {
   // logic to view purchased courses
+  const user = {
+    username: req.headers.username,
+    password: req.headers.password,
+  };
+  let findUser = USERS.find(
+    (user1) =>
+      user1.username === user.username && user1.password === user.password
+  );
+  if (findUser) {
+    res.json(findUser.purchasedCourses);
+  }
+  else {
+    res.status(401).send("Unauthorized");
+  }
 });
 
 app.listen(3000, () => {
