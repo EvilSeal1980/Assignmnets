@@ -7,6 +7,7 @@ let ADMINS = [];
 let USERS = [];
 let COURSES = [];
 
+// Use app.use(middleware) when all routes need to go through it.
 const adminAuthentication = (req, res, next) => {
   const { username, password } = req.headers;
 
@@ -108,7 +109,7 @@ app.get('/users/purchasedCourses', userAuthentication, (req, res) => {
   // const purchasedCourses = COURSES.filter(c => req.user.purchasedCourses.includes(c.id));
   // We need to extract the complete course object from COURSES
   // which have ids which are present in req.user.purchasedCourses
-  var purchasedCourseIds = req.user.purchasedCourses; [1, 4];
+  var purchasedCourseIds = req.user.purchasedCourses;
   var purchasedCourses = [];
   for (let i = 0; i<COURSES.length; i++) {
     if (purchasedCourseIds.indexOf(COURSES[i].id) !== -1) {
