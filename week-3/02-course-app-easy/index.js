@@ -1,228 +1,124 @@
-const express = require("express");
+const express = require('express');
 const app = express();
-const bodyParser = require("body-parser");
 
-app.use(bodyParser.json());
+app.use(express.json());
 
 let ADMINS = [];
 let USERS = [];
 let COURSES = [];
 
-// Admin routes
-app.post("/admin/signup", (req, res) => {
-  // logic to sign up admin
-  const admin = {
-    username: req.body.username,
-    password: req.body.password,
-    courses: [],
-  };
-  if (
-    ADMINS.find(
-      (user) =>
-        user.username === admin.username && user.password === admin.password
-    )
-  ) {
-    res.send("Already an admin");
-  } else {
-    ADMINS.push(admin);
-    res.send("Admin created sucessfully");
-  }
-});
+const adminAuthentication = (req, res, next) => {
+  const { username, password } = req.headers;
 
-app.post("/admin/login", (req, res) => {
-  // logic to log in admin
-  const admin = {
-    username: req.headers.username,
-    password: req.headers.password,
-  };
-  if (
-    ADMINS.find(
-      (user) =>
-        user.username === admin.username && user.password === admin.password
-    )
-  ) {
-    res.send("Logged in sucessfully");
+  const admin = ADMINS.find(a => a.username === username && a.password === password);
+  if (admin) {
+    next();
   } else {
-    res.status(401).send("Unauthorized");
+    res.status(403).json({ message: 'Admin authentication failed' });
   }
-});
-
-const generateId = () => {
-  return COURSES.length + 1;
 };
 
-app.post("/admin/courses", (req, res) => {
-  // logic to create a course
-  const admin = {
-    username: req.headers.username,
-    password: req.headers.password,
-  };
-  const findAdmin = ADMINS.find(
-    (user) =>
-      user.username === admin.username && user.password === admin.password
-  );
-  if (findAdmin) {
-    const course = {
-      courseID: generateId(),
-      title: req.body.title,
-      description: req.body.description,
-      price: req.body.price,
-      imageLink: req.body.link,
-      published: req.body.published,
-    };
-    COURSES.push(course);
-    findAdmin.courses.push(course);
-    res.json({
-      message: "Course created successfully",
-      courseId: course.courseID,
-    });
+const userAuthentication = (req, res, next) => {
+  const { username, password } = req.headers;
+  const user = USERS.find(u => u.username === username && u.password === password);
+  if (user) {
+    req.user = user;  // Add user object to the request
+    next();
   } else {
-    res.status(401).send("Unauthorized");
+    res.status(403).json({ message: 'User authentication failed' });
   }
-});
+};
 
-app.put("/admin/courses/:courseId", (req, res) => {
-  // logic to edit a course
-  const admin = {
-    username: req.headers.username,
-    password: req.headers.password,
-  };
-  const findAdmin = ADMINS.find(
-    (user) =>
-      user.username === admin.username && user.password === admin.password
-  );
-  if (findAdmin) {
-    const course = findAdmin.courses.find(
-      (course) => course.courseID === parseInt(req.params.courseId)
-    );
-    if (course) {
-      const updatedCourse = {
-        ...course,
-        ...req.body,
-      };
-      findAdmin.courses[findAdmin.courses.indexOf(course)] = updatedCourse;
-      COURSES[course.id - 1] = updatedCourse;
-      res.send("Course updated sucessfully");
-    } else {
-      res.send("Course not found");
-    }
+app.post('/admin/signup', (req, res) => {
+  const admin = req.body;
+  const existingAdmin = ADMINS.find(a => a.username === admin.username);
+  if (existingAdmin) {
+    res.status(403).json({ message: 'Admin already exists' });
   } else {
-    res.status(401).send("Unauthorized");
+    ADMINS.push(admin);
+    res.json({ message: 'Admin created successfully' });
   }
 });
 
-app.get("/admin/courses", (req, res) => {
-  // logic to get all courses
-  const admin = {
-    username: req.headers.username,
-    password: req.headers.password,
-  };
-  const findAdmin = ADMINS.find(
-    (user) =>
-      user.username === admin.username && user.password === admin.password
-  );
-  if (findAdmin) {
-    res.json(findAdmin.courses);
+app.post('/admin/login', adminAuthentication, (req, res) => {
+  res.json({ message: 'Logged in successfully' });
+});
+
+app.post('/admin/courses', adminAuthentication, (req, res) => {
+  const course = req.body;
+
+  course.id = Date.now(); // use timestamp as course ID
+  COURSES.push(course);
+  res.json({ message: 'Course created successfully', courseId: course.id });
+});
+
+app.put('/admin/courses/:courseId', adminAuthentication, (req, res) => {
+  const courseId = parseInt(req.params.courseId);
+  const course = COURSES.find(c => c.id === courseId);
+  if (course) {
+    Object.assign(course, req.body);
+    res.json({ message: 'Course updated successfully' });
+  } else {
+    res.status(404).json({ message: 'Course not found' });
   }
 });
 
-// User routes
-app.post("/users/signup", (req, res) => {
-  // logic to sign up user
+app.get('/admin/courses', adminAuthentication, (req, res) => {
+  res.json({ courses: COURSES });
+});
+
+app.post('/users/signup', (req, res) => {
+  // const user = {...req.body, purchasedCourses: []};
   const user = {
     username: req.body.username,
     password: req.body.password,
-    purchasedCourses: [],
-  };
-  if (
-    USERS.find(
-      (user1) =>
-        user1.username === user.username && user1.password === user.password
-    )
-  ) {
-    res.send("Already an user");
-  } else {
-    USERS.push(user);
-    res.send("User created sucessfully");
+    purchasedCourses: []
   }
+  USERS.push(user);
+  res.json({ message: 'User created successfully' });
 });
 
-app.post("/users/login", (req, res) => {
-  // logic to log in user
-  const user = {
-    username: req.headers.username,
-    password: req.headers.password,
-  };
-  if (
-    USERS.find(
-      (user1) =>
-        user1.username === user.username && user1.password === user.password
-    )
-  ) {
-    res.send("Logged in sucessfully");
-  } else {
-    res.status(401).send("Unauthorized");
-  }
+app.post('/users/login', userAuthentication, (req, res) => {
+  res.json({ message: 'Logged in successfully' });
 });
 
-app.get("/users/courses", (req, res) => {
-  // logic to list all courses
-  const user = {
-    username: req.headers.username,
-    password: req.headers.password,
-  };
-  let findUser = USERS.find(
-    (user1) =>
-      user1.username === user.username && user1.password === user.password
-  );
-  if (findUser) {
-    res.json(COURSES);
-  } else {
-    res.status(401).send("Unauthorized");
-  }
-});
-
-app.post("/users/courses/:courseId", (req, res) => {
-  // logic to purchase a course
-  const user = {
-    username: req.headers.username,
-    password: req.headers.password,
-  };
-  let findUser = USERS.find(
-    (user1) =>
-      user1.username === user.username && user1.password === user.password
-  );
-  if (findUser) {
-    const course = findUser.purchasedCourses.find(
-      (course) => course.courseID === parseInt(req.params.courseId)
-    );
-    if (course) {
-      res.send("Course already purchased");
-    } else {
-      findUser.purchasedCourses.push({ course });
-      res.send("Course purchased sucessfully");
+app.get('/users/courses', userAuthentication, (req, res) => {
+  // COURSES.filter(c => c.published)
+  let filteredCourses = [];
+  for (let i = 0; i<COURSES.length; i++) {
+    if (COURSES[i].published) {
+      filteredCourses.push(COURSES[i]);
     }
   }
+  res.json({ courses: filteredCourses });
 });
 
-app.get("/users/purchasedCourses", (req, res) => {
-  // logic to view purchased courses
-  const user = {
-    username: req.headers.username,
-    password: req.headers.password,
-  };
-  let findUser = USERS.find(
-    (user1) =>
-      user1.username === user.username && user1.password === user.password
-  );
-  if (findUser) {
-    res.json(findUser.purchasedCourses);
+app.post('/users/courses/:courseId', userAuthentication, (req, res) => {
+  const courseId = Number(req.params.courseId);
+  const course = COURSES.find(c => c.id === courseId && c.published);
+  if (course) {
+    req.user.purchasedCourses.push(courseId);
+    res.json({ message: 'Course purchased successfully' });
+  } else {
+    res.status(404).json({ message: 'Course not found or not available' });
   }
-  else {
-    res.status(401).send("Unauthorized");
+});
+
+app.get('/users/purchasedCourses', userAuthentication, (req, res) => {
+  // const purchasedCourses = COURSES.filter(c => req.user.purchasedCourses.includes(c.id));
+  // We need to extract the complete course object from COURSES
+  // which have ids which are present in req.user.purchasedCourses
+  var purchasedCourseIds = req.user.purchasedCourses; [1, 4];
+  var purchasedCourses = [];
+  for (let i = 0; i<COURSES.length; i++) {
+    if (purchasedCourseIds.indexOf(COURSES[i].id) !== -1) {
+      purchasedCourses.push(COURSES[i]);
+    }
   }
+
+  res.json({ purchasedCourses });
 });
 
 app.listen(3000, () => {
-  console.log("Server is listening on port 3000");
+  console.log('Server is listening on port 3000');
 });
