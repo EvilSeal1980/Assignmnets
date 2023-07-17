@@ -1,69 +1,41 @@
-import { Button, Card, TextField, Typography } from "@mui/material";
-import { useState } from "react";
+import Button from '@mui/material/Button';
+import TextField from "@mui/material/TextField";
+import {Card, Typography} from "@mui/material";
 
-const Login = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-  
-    return (
-      <>
-        <div style={{height:"100vh", display:"flex", flexDirection:"column", justifyContent:"center"}}>
-          <div style={{display:"flex", justifyContent:"center"}}>
-            <Typography variant="h6">
-              Welcome to Coursera. Sign in below
-            </Typography>
-          </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <Card variant="outlined" style={{ width: 400, padding: 20 }}>
-              <TextField
-                onChange={(e) => setEmail(e.target.value)}
-                fullWidth={true}
-                label="Email"
-                variant="outlined"
-              />
-              <br />
-              <br />
-              <TextField
-                onChange={(e) => setPassword(e.target.value)}
-                fullWidth={true}
-                label="Password"
-                variant="outlined"
-              />
-              <br />
-              <br />
-              <Button
-              size="large"
-              variant="contained"
-              onClick= {async (e) => {
-                  e.preventDefault();
-                  const existingUser = {
-                      username: email,
-                      password: password
-                  }
-                  const response = await fetch("http://localhost:3000/admin/login", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(existingUser),
-                    });
-  
-                    if(response.ok) {
-                      const resData = await response.json();
-                      const token = resData.token;
-                      localStorage.setItem("token", token);
-                    }
-                    else {
-                        console.log("Signin failed");
-                    }
-              }}>
-                  Sign In
-              </Button>
+function Login() {
+    return <div>
+            <div style={{
+                paddingTop: 150,
+                marginBottom: 10,
+                display: "flex",
+                justifyContent: "center"
+            }}>
+                <Typography variant={"h6"}>
+                Welcome back. Sign in below
+                </Typography>
+            </div>
+        <div style={{display: "flex", justifyContent: "center"}}>
+            <Card varint={"outlined"} style={{width: 400, padding: 20}}>
+                <TextField
+                    fullWidth={true}
+                    id="outlined-basic"
+                    label="Email"
+                    variant="outlined"
+                />
+                <br/><br/>
+                <TextField
+                    fullWidth={true}
+                    id="outlined-basic"
+                    label="Password"
+                    variant="outlined"
+                    type={"password"}
+                />
+                <br/><br/>
+
+                <Button size={"large"} variant="contained"> Signin</Button>
             </Card>
-          </div>
         </div>
-      </>
-    );
+    </div>
 }
 
-export default Login
+export default Login;
