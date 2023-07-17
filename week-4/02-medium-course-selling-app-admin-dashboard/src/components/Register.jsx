@@ -3,7 +3,7 @@ import TextField from "@mui/material/TextField";
 import {Card, Typography} from "@mui/material";
 import {useState} from "react";
 
-function Signup() {
+function Register() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
 
@@ -70,4 +70,4 @@ function Signup() {
     </div>
 }
 
-export default Signup;
+export default Register;
