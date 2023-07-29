@@ -6,7 +6,7 @@ export const authenticateJwt = (req: Request, res: Response, next: NextFunction)
   const authHeader = req.headers.authorization;
   if (authHeader) {
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, SECRET, (err: any, payload: { id: string | string[] | undefined; }) => {
+    jwt.verify(token, SECRET, (err, payload) => {
       if (err) {
         return res.sendStatus(403);
       }
